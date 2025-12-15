@@ -545,7 +545,8 @@
     <script>
         // Refresh data
         function refreshData() {
-            location.reload();
+            // Force reload with cache bust to get fresh data
+            window.location.href = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
         }
 
         // Update status indicators based on current values

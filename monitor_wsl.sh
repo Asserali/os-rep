@@ -181,9 +181,10 @@ get_cpu_metrics() {
     echo "  \"count\": $cpu_count,"
     
     # Current CPU frequency (average of all cores)
-    cpu_freq=$(awk '{sum+=$1; count+=1} END {if(count>0) printf "%.2f", sum/count; else print "0"}' /proc/cpuinfo | grep -o '[0-9.]*' | head -1)
-    if [ -z "$cpu_freq" ]; then
-        cpu_freq=$(grep "cpu MHz" /proc/cpuinfo | awk '{sum+=$4; count+=1} END {if(count>0) printf "%.2f", sum/count; else print "0"}')
+    cpu_freq=$(grep "cpu MHz" /proc/cpuinfo | awk '{sum+=$4; count+=1} END {if(count>0) printf "%.2f", sum/count; else print "0"}')
+    if [ -z "$cpu_freq" ] || [ "$cpu_freq" = "0" ]; then
+        # Fallback: try to get from /sys/devices/system/cpu
+        cpu_freq=$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq 2>/dev/null | awk '{sum+=$1/1000; count+=1} END {if(count>0) printf "%.2f", sum/count; else print "0"}')
     fi
     echo "  \"frequency_mhz\": ${cpu_freq:-0},"
     
