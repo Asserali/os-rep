@@ -395,22 +395,30 @@ def report_html():
 @app.route('/report/markdown')
 def report_markdown():
     """Generate and serve Markdown report"""
+    from io import BytesIO
+    
     source = request.args.get('source', 'windows')
     latest = load_windows_metrics() if source == 'windows' else load_wsl_metrics()
     
     if not latest:
         return 'No data available', 404
     
-    # Generate markdown
+    # Generate markdown content
     md_content = generate_markdown_report(latest, source)
     
-    # Save to file
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    report_file = os.path.join(REPORTS_DIR, f'report_{source}_{timestamp}.md')
-    with open(report_file, 'w', encoding='utf-8') as f:
-        f.write(md_content)
+    # Create in-memory file
+    buffer = BytesIO()
+    buffer.write(md_content.encode('utf-8'))
+    buffer.seek(0)
     
-    return send_file(report_file, as_attachment=True, download_name=f'system_report_{source}.md')
+    # Send directly from memory without saving to disk
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f'system_report_{source}_{timestamp}.md',
+        mimetype='text/markdown'
+    )
 
 # =================================================================
 # Report Generation
