@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Data Collection Service
+  collector:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.collector
+    container_name: system-monitor-collector
+    hostname: monitor-collector
+    privileged: true
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    environment:
+      - PROJECT_ROOT=/app
+      - MONITOR_INTERVAL=60
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+
+  # Reporting and Visualization Service
+  reporter:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.reporter
+    container_name: system-monitor-reporter
+    hostname: monitor-reporter
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data:ro
+      - ./config:/app/config:ro
+      - ./reporting:/app/reporting
+    environment:
+      - PROJECT_ROOT=/app
+      - FLASK_APP=reporting/reporter.py
+      - FLASK_ENV=production
+    depends_on:
+      - collector
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+
+  # Optional: InfluxDB for time-series storage
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: system-monitor-influxdb
+    hostname: monitor-influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - ./config/influxdb.conf:/etc/influxdb2/config.yml:ro
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpassword
+      - DOCKER_INFLUXDB_INIT_ORG=system-monitor
+      - DOCKER_INFLUXDB_INIT_BUCKET=metrics
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+    profiles:
+      - with-influxdb
+
+networks:
+  monitoring-network:
+    driver: bridge
+
+volumes:
+  influxdb-data:

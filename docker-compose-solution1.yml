@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    image: system-monitor/dashboard:latest
+    container_name: system-monitor-dashboard
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount the data directory where the agent writes metrics
+      - ./data:/data:ro
+    environment:
+      - DATA_DIR=/data/metrics
+      - FLASK_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+# Optional: If you want to keep the Linux monitoring container
+  # linux-monitor:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.bash-monitor
+  #   container_name: system-monitor-linux
+  #   privileged: true
+  #   volumes:
+  #     - ./data:/app/data
+  #     - /proc:/host/proc:ro
+  #     - /sys:/host/sys:ro
+  #   restart: unless-stopped

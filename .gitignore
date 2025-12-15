@@ -1,0 +1,48 @@
+# System Monitor .gitignore
+
+# Data directories
+data/metrics/*.json
+data/reports/*
+data/logs/*.log
+data/alerts/*.log
+
+# Keep directory structure
+!data/metrics/.gitkeep
+!data/reports/.gitkeep
+!data/logs/.gitkeep
+!data/alerts/.gitkeep
+
+# Environment files
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+
+# Temporary files
+/tmp/
+*.bak
