@@ -257,21 +257,35 @@ def save_metrics(metrics, filename='data/metrics/latest_windows.json'):
     print(f"\n✅ Metrics saved to: {filename}")
 
 if __name__ == '__main__':
+    import sys
+    
+    # Check for silent mode (no console output)
+    silent_mode = '--silent' in sys.argv or '-s' in sys.argv
+    
     try:
         # Collect metrics
         metrics = get_system_metrics()
         
-        # Display metrics
-        print_metrics(metrics)
+        # Display metrics (only if not in silent mode)
+        if not silent_mode:
+            print_metrics(metrics)
         
         # Save to file
         save_metrics(metrics)
         
-        # Also save as JSON for viewing
-        print("\nJSON Output:")
-        print(json.dumps(metrics, indent=2))
+        # Also save as JSON for viewing (only if not in silent mode)
+        if not silent_mode:
+            print("\nJSON Output:")
+            print(json.dumps(metrics, indent=2))
         
     except Exception as e:
-        print(f"❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
+        if not silent_mode:
+            print(f"❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+        else:
+            # In silent mode, just write error to file
+            import traceback
+            with open('data/logs/monitor_error.log', 'a', encoding='utf-8') as f:
+                f.write(f"\n[{metrics.get('timestamp', 'unknown')}] Error: {e}\n")
+                f.write(traceback.format_exc())
